@@ -18,23 +18,26 @@ export function validateTimeAndCursor(
   value = '',
   defaultValue = '',
   colon = DEFAULT_COLON,
-  cursorPosition = 0
+  cursorPosition = 0,
+  militaryTime = false
 ): [string, number] {
   const [oldH, oldM, oldS] = defaultValue.split(colon);
+
+  const hBound = militaryTime ? 1 : 2;
 
   let newCursorPosition = Number(cursorPosition);
   let [newH, newM, newS] = String(value).split(colon);
 
   newH = formatTimeItem(newH);
-  if (Number(newH[0]) > 2) {
+  if (Number(newH[0]) > hBound) {
     newH = oldH;
     newCursorPosition -= 1;
-  } else if (Number(newH[0]) === 2) {
-    if (Number(oldH[0]) === 2 && Number(newH[1]) > 3) {
+  } else if (Number(newH[0]) === hBound) {
+    if (Number(oldH[0]) === hBound && Number(newH[1]) > (militaryTime ? 3 : 2)) {
       newH = `2${oldH[1]}`;
       newCursorPosition -= 2;
-    } else if (Number(newH[1]) > 3) {
-      newH = '23';
+    } else if (Number(newH[1]) > (militaryTime ? 3 : 2)) {
+      newH = militaryTime ? '23' : '12';
     }
   }
 
@@ -82,7 +85,8 @@ export default class TimeField extends React.Component<Props, State> {
     showSeconds: false,
     input: null,
     style: {},
-    colon: DEFAULT_COLON
+    colon: DEFAULT_COLON,
+    militaryTime: false
   };
 
   constructor(props: Props) {
@@ -91,13 +95,15 @@ export default class TimeField extends React.Component<Props, State> {
     const _showSeconds = Boolean(props.showSeconds);
     const _defaultValue = _showSeconds ? DEFAULT_VALUE_FULL : DEFAULT_VALUE_SHORT;
     const _colon = props.colon && props.colon.length === 1 ? props.colon : DEFAULT_COLON;
-    const [validatedTime] = validateTimeAndCursor(_showSeconds, this.props.value, _defaultValue, _colon);
+    const _miltaryTime = Boolean(props.militaryTime);
+    const [validatedTime] = validateTimeAndCursor(_showSeconds, this.props.value, _defaultValue, _colon, _miltaryTime);
 
     this.state = {
       value: validatedTime,
       _colon,
       _showSeconds,
       _defaultValue,
+      _miltaryTime,
       _maxLength: _defaultValue.length
     };
 
@@ -110,7 +116,8 @@ export default class TimeField extends React.Component<Props, State> {
         this.state._showSeconds,
         this.props.value,
         this.state._defaultValue,
-        this.state._colon
+        this.state._colon,
+        this.state._miltaryTime
       );
       this.setState({
         value: validatedTime
@@ -183,7 +190,8 @@ export default class TimeField extends React.Component<Props, State> {
       newValue,
       oldValue,
       colon,
-      newPosition
+      newPosition,
+      this.state._miltaryTime
     );
 
     this.setState({value: validatedTime}, () => {
